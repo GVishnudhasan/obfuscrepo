@@ -16,6 +16,14 @@ The platform is developed with modern web technologies, employing a microservice
 - **Admin Login**: 
   - Email: `admin@test.com`
   - Password: `Admin1`
+    
+## ER Diagram
+![ER Diagram](https://github.com/user-attachments/assets/7e500303-ca9d-4472-a424-d3928e264e04)
+
+
+## Architecture Diagram
+
+![Architecture](https://github.com/user-attachments/assets/14468764-88b3-4115-9e89-6cd360293ba1)
 
 ---
 ## Major Design Decisions and Trade-offs
