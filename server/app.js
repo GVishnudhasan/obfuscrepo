@@ -48,13 +48,26 @@ app.use(
 
 app.use(cookieParser());
 
+const allowedOrigins = [
+  CLIENT_URL,
+  'http://localhost:3000',
+];
+
 app.use(
   cors({
-    origin:'http://localhost:3000', 
-    credentials:true,            //access-control-allow-credentials:true
-    optionSuccessStatus:200
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
+
 
 app.post('/api/driver/update-location', (req, res) => {
   const { cabId, latitude, longitude } = req.body;
