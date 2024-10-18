@@ -16,6 +16,12 @@ The platform is developed with modern web technologies, employing a microservice
 - **Admin Login**: 
   - Email: `admin@test.com`
   - Password: `Admin1`
+
+
+## Project Demo
+
+Check out the project demo on YouTube: [Demo Video](https://youtu.be/9rUsVVkEUvc?si=rBcCnKHYVRM8fgS0)
+
     
 ## ER Diagram
 ![ER Diagram](https://github.com/user-attachments/assets/7e500303-ca9d-4472-a424-d3928e264e04)
