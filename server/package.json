@@ -1,7 +1,7 @@
 {
-  "name": "on-demand-logistics-platform-server",
+  "name": "server",
   "version": "1.0.0",
-  "description": "Handling Backend Logic of on-demand-logistics-platform",
+  "description": "Handling Backend Logic",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -9,7 +9,7 @@
     "dev": "nodemon app.js",
     "lint": "eslint '**/*.js'"
   },
-  "author": "Atharva Lende",
+  "author": "Vishnudhasan",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.654.0",
