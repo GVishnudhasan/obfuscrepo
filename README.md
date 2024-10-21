@@ -8,14 +8,14 @@ The platform is developed with modern web technologies, employing a microservice
 ## Example Credentials for Testing
 
 - **User Login**: 
-  - Email: `user@test.com`
-  - Password: `User1`
+  - Email: `user2@test.com`
+  - Password: `User2`
 - **Driver Login**: 
-  - Email: `driver@test.com`
-  - Password: `Driver1`
+  - Email: `driver2@test.com`
+  - Password: `Driver2`
 - **Admin Login**: 
-  - Email: `admin@test.com`
-  - Password: `Admin1`
+  - Email: `admin2@test.com`
+  - Password: `Admin2`
 
 
 ## Project Demo
