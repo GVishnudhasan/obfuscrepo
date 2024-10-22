@@ -16,6 +16,13 @@ const bookingSchema = new mongoose.Schema({
   cabId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   driverLatitude: { type: Number, default: null },
   driverLongitude: { type: Number, default: null },
+  driverLocation: {
+    type: {
+      lat: Number,
+      lng: Number,
+    },
+    default: null,
+  },
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

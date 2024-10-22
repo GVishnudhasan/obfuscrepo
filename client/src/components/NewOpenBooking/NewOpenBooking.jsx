@@ -1,14 +1,21 @@
 import usePagination from '../../hooks/isPaginations/usePaginations';
 import React, { useState, useEffect } from 'react';
 import Modal from '../Modal/modal';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:8080');
 
 export default function ViewNewOpenBooking({
   viewBooking,
   userId,
   deleteBookingHandler,
 }) {
+  const [driverLocation, setDriverLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [swipedBookings, setSwipedBookings] = useState(new Set());
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
+  const [watchId, setWatchId] = useState(null);
 
   useEffect(() => {
     const storedSwipedBookings = localStorage.getItem('swipedBookings');
@@ -17,17 +24,61 @@ export default function ViewNewOpenBooking({
     }
   }, []);
 
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [deleteItem, setDeleteItem] = useState(null);
+  useEffect(() => {
+    // Listen for location updates from the server
+    socket.on('updateLocation', (locationData) => {
+      if (locationData.bookingId === deleteItem?._id) {
+        setDriverLocation(locationData);
+      }
+    });
+
+    // Cleanup socket listener on component unmount
+    return () => {
+      socket.off('updateLocation');
+    };
+  }, [deleteItem]);
 
   const handleConfirmDeleteItem = () => {
     setDeleteConfirm(false);
     setDeleteItem(null);
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId); // Stop watching location updates
+    }
   };
 
   const handleConfirmDeleteCheck = (booking) => {
     setDeleteConfirm(true);
     setDeleteItem(booking);
+  };
+
+  const handleStartBooking = (booking) => {
+    // Emit that the driver has accepted the booking and is en-route
+    deleteBookingHandler(booking._id, userId, 'En-route to Pickup');
+
+    // Start watching driver's real-time location
+    const id = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const locationData = {
+          lat: latitude,
+          lng: longitude,
+          bookingId: booking._id,
+        };
+
+        // Emit driver's current location to the server
+        socket.emit('driverLocationUpdate', locationData);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      }
+    );
+
+    setWatchId(id);
   };
 
   const filteredBooking = viewBooking.filter(
@@ -129,9 +180,7 @@ export default function ViewNewOpenBooking({
                           width: '90px',
                           border: '1px solid green',
                         }}
-                        onClick={() => {
-                          handleConfirmDeleteCheck(booking);
-                        }}
+                        onClick={() => handleConfirmDeleteCheck(booking)}
                       >
                         Start
                       </button>
@@ -206,56 +255,19 @@ export default function ViewNewOpenBooking({
         )}
       </div>
       {deleteConfirm && deleteItem && (
-        <Modal isOpen={deleteConfirm}>
-          <div
-            style={{
-              width: '80%',
-              margin: 'auto',
-              height: '100%',
-              display: 'flex',
-              padding: '5vh',
-              textAlign: 'center',
-              flexDirection: 'column',
-              gap: '3vh',
-              alignItems: 'center',
-            }}
-          >
-            <b>Are you sure you want to Take this Tour ?</b>
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '2vh',
-              }}
+        <Modal isOpen={deleteConfirm} onClose={handleConfirmDeleteItem}>
+          <h3>Are you sure you want to confirm?</h3>
+          <p>Click Yes to proceed with the booking.</p>
+          <div className="modal-actions">
+            <button
+              className="addEntryButton"
+              onClick={() => handleStartBooking(deleteItem)}
             >
-              <button
-                className="addEntryButton"
-                style={{
-                  backgroundColor: 'white',
-                  color: 'green',
-                  border: '1px solid green',
-                }}
-                onClick={() => {
-                  deleteBookingHandler(deleteItem._id, userId);
-                  handleConfirmDeleteItem();
-                }}
-              >
-                Yes
-              </button>
-              <button
-                className="addEntryButton"
-                style={{
-                  backgroundColor: 'white',
-                  color: 'red',
-                  border: '1px solid red',
-                }}
-                onClick={() => handleConfirmDeleteItem()}
-              >
-                No
-              </button>
-            </div>
+              Yes
+            </button>
+            <button className="addEntryButton" onClick={handleConfirmDeleteItem}>
+              No
+            </button>
           </div>
         </Modal>
       )}

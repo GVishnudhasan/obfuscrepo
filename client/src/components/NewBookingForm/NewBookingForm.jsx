@@ -507,7 +507,7 @@ const NewBookingForm = ({ userId }) => {
     if (pickup && dropOff && vehicle) {
       const distance = distanceMatrix[pickup]?.[dropOff] || 0;
       const vehicleCost = costEstimates[vehicle] || 0;
-      const cost = distance * vehicleCost; // You can modify this formula based on your pricing logic
+      const cost = distance * vehicleCost;
       setEstimatedCost(cost);
     } else {
       setEstimatedCost(0);
@@ -594,7 +594,7 @@ const NewBookingForm = ({ userId }) => {
           value={formData.time}
           onChange={handleChange}
           required
-          min={`${new Date().getHours() + 1 < 10 ? '0' : ''}${new Date().getHours() + 1}:00`}
+          // min={`${new Date().getHours() + 1 < 10 ? '0' : ''}${new Date().getHours() + 1}:00`}
         />
       </div>
 

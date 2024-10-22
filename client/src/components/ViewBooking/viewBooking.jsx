@@ -1,8 +1,13 @@
 import usePagination from '../../hooks/isPaginations/usePaginations';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../Modal/modal';
 import { Link } from 'react-router-dom';
 import { updateBookingStatus } from '../../server/booking/booking';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { io } from 'socket.io-client';
+import 'leaflet/dist/leaflet.css'; // Leaflet CSS import for map styles
+
+const socket = io('http://localhost:8080'); // Adjust as per your backend
 
 export default function ViewBooking({
   viewBooking,
@@ -12,6 +17,10 @@ export default function ViewBooking({
   type,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [trackModalOpen, setTrackModalOpen] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [bookingToTrack, setBookingToTrack] = useState(null);
+
   const filteredBooking = viewBooking
     .filter((booking) => {
       const matchesSearchQuery =
@@ -51,6 +60,7 @@ export default function ViewBooking({
     setDeleteConfirm(true);
     setDeleteItem(booking);
   };
+
   const {
     currentPage,
     entriesPerPage,
@@ -65,7 +75,49 @@ export default function ViewBooking({
 
   const UpdateBookingStatus = async (bookingId, status) => {
     updateBookingStatus(bookingId, userId, status);
-  }
+  };
+
+  // Function to open the tracking modal and start listening for location updates
+  const handleTrackRide = (booking) => {
+    setBookingToTrack(booking);
+    // console.log(booking);
+    // console.log(locationData)
+    setTrackModalOpen(true);
+
+    // Start tracking the driver's location for this booking
+    // socket.emit('driverLocationUpdate', { bookingId: booking._id });
+    console.log('started');
+    // Listen for location updates from the backend
+    socket.on('updateLocation', (locationData) => {
+      console.log(locationData);
+      if (locationData.bookingId === booking._id) {
+        setCurrentLocation({
+          lat: booking.driverLatitude,
+          lng: booking.driverLongitude,
+        });
+        console.log(currentLocation);
+        console.log(locationData);
+      }
+    });
+  };
+
+  const closeTrackModal = () => {
+    setTrackModalOpen(false);
+    setBookingToTrack(null);
+    setCurrentLocation(null);
+    socket.emit('stop-tracking'); // Stop tracking when the modal is closed
+  };
+
+  const AutoCenter = ({ location }) => {
+    const map = useMap();
+    useEffect(() => {
+      if (location) {
+        map.setView([location.lat, location.lng], 13); // Adjust the zoom level if needed
+      }
+    }, [location, map]);
+
+    return null;
+  };
 
   return (
     <div className="artifacts-container">
@@ -108,6 +160,7 @@ export default function ViewBooking({
                   <th className="header-cell">Booking Time</th>
                   <th className="header-cell">Booking Status</th>
                   <th className="header-cell">Action</th>
+                  <th className="header-cell">Track Ride</th> {/* New column */}
                 </tr>
               </thead>
               <tbody className="table-body">
@@ -118,7 +171,6 @@ export default function ViewBooking({
                     <td>{booking.dropOffLocation}</td>
                     <td>{new Date(booking.date).toLocaleDateString()}</td>
                     <td>{formatTime(booking.time)}</td>
-                    {/* Conditionally render booking status or a dropdown for updating status */}
                     <td>
                       {type === 'user' ? (
                         <span>{booking.status}</span>
@@ -130,33 +182,47 @@ export default function ViewBooking({
                           }
                         >
                           <option value="Pending">Pending</option>
-                          <option value="En-route to pickup">En-route to pickup</option>
-                          <option value="Goods collected">Goods collected</option>
+                          <option value="En-route to pickup">
+                            En-route to pickup
+                          </option>
+                          <option value="Goods collected">
+                            Goods collected
+                          </option>
                           <option value="Delivered">Delivered</option>
                         </select>
                       )}
                     </td>
-                    <td style={{ padding: type ? '10px' : '' }}>
+                    <td>
                       {booking.status === 'pending' ? (
                         <button
                           className="addEntryButton"
                           style={{
                             backgroundColor: 'white',
                             color: 'red',
-                            width: '90px',
                             border: '1px solid red',
                           }}
-                          onClick={() => {
-                            handleConfirmDeleteCheck(booking);
-                          }}
+                          onClick={() => handleConfirmDeleteCheck(booking)}
                         >
                           Cancel Tour
                         </button>
-                      ) : booking.status === 'current' ? (
-                        <span>Current Tour</span>
-                      ) : (
+                      ) : booking.status === 'Delivered' ? (
                         <span>Completed Tour</span>
+                      ) : (
+                        <span>Current Tour</span>
                       )}
+                    </td>
+                    <td>
+                      <button
+                        className="addEntryButton"
+                        style={{
+                          backgroundColor: 'white',
+                          color: 'blue',
+                          border: '1px solid blue',
+                        }}
+                        onClick={() => handleTrackRide(booking)}
+                      >
+                        Track Ride
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -168,6 +234,44 @@ export default function ViewBooking({
             </p>
           )}
         </div>
+        {trackModalOpen && bookingToTrack && (
+          <Modal isOpen={trackModalOpen} onClose={closeTrackModal}>
+            <h2>Tracking Ride for Booking ID: {bookingToTrack._id}</h2>
+            <div
+              style={{ height: '200px', width: '100%', position: 'relative' }}
+            >
+              {/* MapContainer with dynamic center based on current location */}
+              <MapContainer
+                center={
+                  currentLocation
+                    ? [currentLocation.lat, currentLocation.lng]
+                    : [0, 0]
+                }
+                zoom={13}
+                style={{ height: '80%', width: '100%' }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                />
+                {currentLocation && (
+                  <>
+                    <Marker
+                      position={[currentLocation.lat, currentLocation.lng]}
+                    >
+                      <Popup>
+                        Driver is here: {currentLocation.lat},{' '}
+                        {currentLocation.lng}
+                      </Popup>
+                    </Marker>
+                    {/* Auto-center the map on location change */}
+                    <AutoCenter location={currentLocation} />
+                  </>
+                )}
+              </MapContainer>
+            </div>
+          </Modal>
+        )}
         {filteredBooking.length > 0 && (
           <div className="pagination">
             <p>
@@ -212,61 +316,20 @@ export default function ViewBooking({
             </div>
           </div>
         )}
-      </div>
-      {deleteConfirm && deleteItem && (
-        <Modal isOpen={deleteConfirm}>
-          <div
-            style={{
-              width: '80%',
-              margin: 'auto',
-              height: '100%',
-              display: 'flex',
-              padding: '5vh',
-              textAlign: 'center',
-              flexDirection: 'column',
-              gap: '3vh',
-              alignItems: 'center',
-            }}
-          >
-            <b>Are you sure you want to Delete this Tour ?</b>
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '2vh',
-              }}
-            >
-              <button
-                className="addEntryButton"
-                style={{
-                  backgroundColor: 'white',
-                  color: 'green',
-                  border: '1px solid green',
-                }}
-                onClick={() => {
-                  deleteBookingHandler(deleteItem._id, userId, setViewBooking);
-                  handleConfirmDeleteItem();
-                }}
-              >
-                Yes
-              </button>
-              <button
-                className="addEntryButton"
-                style={{
-                  backgroundColor: 'white',
-                  color: 'red',
-                  border: '1px solid red',
-                }}
-                onClick={() => handleConfirmDeleteItem()}
-              >
-                No
-              </button>
+        {deleteConfirm && (
+          <Modal isOpen={deleteConfirm} onClose={() => setDeleteConfirm(false)}>
+            <div>
+              <h2>Are you sure you want to cancel this booking?</h2>
+              <div>
+                <button onClick={() => deleteBookingHandler(deleteItem)}>
+                  Yes, cancel it
+                </button>
+                <button onClick={handleConfirmDeleteItem}>No, keep it</button>
+              </div>
             </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        )}
+      </div>
     </div>
   );
 }

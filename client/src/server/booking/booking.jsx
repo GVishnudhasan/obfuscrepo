@@ -16,7 +16,12 @@ export const handleBookingSubmit = async (
 ) => {
   e.preventDefault();
   const currentDate = new Date();
-  const inputDate = new Date(formData.date);
+  const currentDateParts = currentDate.toLocaleString().split(',');
+  const currentTimeParts = currentDateParts[1].split(':');
+  const currentTime = new Date(
+    currentDate.setHours(currentTimeParts[0], currentTimeParts[1])
+  );
+  const inputDate = new Date();
   const inputTimeParts = formData.time.split(':');
   const inputTime = new Date(
     inputDate.setHours(inputTimeParts[0], inputTimeParts[1])
@@ -32,7 +37,9 @@ export const handleBookingSubmit = async (
     return;
   }
 
-  if (inputTime <= currentDate) {
+  if (inputTime <= currentTime) {
+    console.log(currentTime, inputTime);
+
     ShowErrorTaskMessage(
       'The date and time must be greater than the current time.'
     );

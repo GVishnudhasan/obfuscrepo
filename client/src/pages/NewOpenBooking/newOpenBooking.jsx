@@ -72,7 +72,7 @@ const ViewNewBookingPage = () => {
                     textAlign: 'center',
                   }}
                 >
-                  Please Update Your Profile Then You Will Get The Access
+                  Please Update Your Profile to get The Access to Open Rides
                 </h3>
               </div>
             )}
