@@ -2,8 +2,10 @@ import usePagination from '../../hooks/isPaginations/usePaginations';
 import React, { useState, useEffect } from 'react';
 import Modal from '../Modal/modal';
 import { io } from 'socket.io-client';
+import { REACT_APP_API_URL } from '../../parameter/parameter';
 
-const socket = io('http://localhost:8080');
+// const socket = io('http://localhost:8080');
+const socket = io(`${REACT_APP_API_URL}`);
 
 export default function ViewNewOpenBooking({
   viewBooking,

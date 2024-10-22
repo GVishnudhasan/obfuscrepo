@@ -6,8 +6,8 @@ import { updateBookingStatus } from '../../server/booking/booking';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { io } from 'socket.io-client';
 import 'leaflet/dist/leaflet.css'; // Leaflet CSS import for map styles
-
-const socket = io('http://localhost:8080'); // Adjust as per your backend
+import { REACT_APP_API_URL } from '../../parameter/parameter';
+const socket = io(`${REACT_APP_API_URL}`); // Adjust as per your backend
 
 export default function ViewBooking({
   viewBooking,
