@@ -8,7 +8,7 @@ import { io } from 'socket.io-client';
 import 'leaflet/dist/leaflet.css'; // Leaflet CSS import for map styles
 import { REACT_APP_API_URL } from '../../parameter/parameter';
 const socket = io(`${REACT_APP_API_URL}`); // Adjust as per your backend
-
+// const socket = io('http://localhost:8080');
 export default function ViewBooking({
   viewBooking,
   deleteBookingHandler,
@@ -20,6 +20,8 @@ export default function ViewBooking({
   const [trackModalOpen, setTrackModalOpen] = useState(false);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [bookingToTrack, setBookingToTrack] = useState(null);
+  const [sharingLocation, setSharingLocation] = useState(false);
+  const [locationInterval, setLocationInterval] = useState(null);
 
   const filteredBooking = viewBooking
     .filter((booking) => {
@@ -77,42 +79,102 @@ export default function ViewBooking({
     updateBookingStatus(bookingId, userId, status);
   };
 
-  // Function to open the tracking modal and start listening for location updates
+  // Function to handle tracking the ride for users
   const handleTrackRide = (booking) => {
     setBookingToTrack(booking);
-    // console.log(booking);
-    // console.log(locationData)
     setTrackModalOpen(true);
-
-    // Start tracking the driver's location for this booking
-    // socket.emit('driverLocationUpdate', { bookingId: booking._id });
-    console.log('started');
-    // Listen for location updates from the backend
     socket.on('updateLocation', (locationData) => {
-      console.log(locationData);
+      console.log('Location data:', locationData);
       if (locationData.bookingId === booking._id) {
         setCurrentLocation({
           lat: booking.driverLatitude,
           lng: booking.driverLongitude,
         });
-        console.log(currentLocation);
-        console.log(locationData);
       }
     });
+  };
+
+  // Function to handle location sharing for drivers
+  // const handleShareLocation = (booking) => {
+  //   if (navigator.geolocation) {
+  //     navigator.geolocation.getCurrentPosition(
+  //       (position) => {
+  //         const { latitude, longitude } = position.coords;
+  //         // Emit the location data to the backend
+  //         socket.emit('driverLocationUpdate', {
+  //           bookingId: booking._id, // Pass the booking ID to identify which booking this location is for
+  //           lat: latitude,
+  //           lng: longitude,
+  //         });
+
+  //         console.log(`Sharing location for booking ${booking._id}:`, {
+  //           latitude,
+  //           longitude,
+  //         });
+  //       },
+  //       (error) => {
+  //         console.error('Error retrieving driver location:', error);
+  //       }
+  //     );
+  //   } else {
+  //     console.error('Geolocation is not supported by this browser.');
+  //   }
+  // };
+  const handleShareLocation = (booking) => {
+    if (!navigator.geolocation) {
+      console.error('Geolocation is not supported by this browser');
+      return;
+    }
+
+    // If already sharing, stop sharing first
+    if (sharingLocation) {
+      clearInterval(locationInterval);
+      setSharingLocation(false);
+      setLocationInterval(null);
+      return;
+    }
+
+    setSharingLocation(true);
+
+    // Start watching the position
+    navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+
+        // Emit the location to the backend
+        const emitLocation = () => {
+          socket.emit('driverLocationUpdate', {
+            bookingId: booking._id,
+            lat: latitude,
+            lng: longitude,
+          });
+        };
+
+        // Set an interval to emit location every 5 seconds
+        const interval = setInterval(emitLocation, 5000);
+        setLocationInterval(interval);
+      },
+      (error) => {
+        console.error('Error getting position:', error);
+      },
+      {
+        enableHighAccuracy: true, // You can adjust this based on your requirements
+      }
+    );
   };
 
   const closeTrackModal = () => {
     setTrackModalOpen(false);
     setBookingToTrack(null);
     setCurrentLocation(null);
-    socket.emit('stop-tracking'); // Stop tracking when the modal is closed
+    socket.emit('stop-tracking');
   };
 
   const AutoCenter = ({ location }) => {
     const map = useMap();
     useEffect(() => {
       if (location) {
-        map.setView([location.lat, location.lng], 13); // Adjust the zoom level if needed
+        map.setView([location.lat, location.lng], 13);
       }
     }, [location, map]);
 
@@ -160,7 +222,9 @@ export default function ViewBooking({
                   <th className="header-cell">Booking Time</th>
                   <th className="header-cell">Booking Status</th>
                   <th className="header-cell">Action</th>
-                  <th className="header-cell">Track Ride</th> {/* New column */}
+                  <th className="header-cell">
+                    {type === 'user' ? 'Track Ride' : 'Share Location'}
+                  </th>
                 </tr>
               </thead>
               <tbody className="table-body">
@@ -212,17 +276,31 @@ export default function ViewBooking({
                       )}
                     </td>
                     <td>
-                      <button
-                        className="addEntryButton"
-                        style={{
-                          backgroundColor: 'white',
-                          color: 'blue',
-                          border: '1px solid blue',
-                        }}
-                        onClick={() => handleTrackRide(booking)}
-                      >
-                        Track Ride
-                      </button>
+                      {type === 'user' ? (
+                        <button
+                          className="addEntryButton"
+                          style={{
+                            backgroundColor: 'white',
+                            color: 'blue',
+                            border: '1px solid blue',
+                          }}
+                          onClick={() => handleTrackRide(booking)}
+                        >
+                          Track Ride
+                        </button>
+                      ) : (
+                        <button
+                          className="addEntryButton"
+                          style={{
+                            backgroundColor: 'white',
+                            color: 'green',
+                            border: '1px solid green',
+                          }}
+                          onClick={() => handleShareLocation(booking)}
+                        >
+                          {sharingLocation ? 'Stop Sharing Location' : 'Share Location'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

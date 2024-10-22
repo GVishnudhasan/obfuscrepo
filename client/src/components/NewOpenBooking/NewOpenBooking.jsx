@@ -26,9 +26,11 @@ export default function ViewNewOpenBooking({
     }
   }, []);
 
+  // Listen for location updates from the server
   useEffect(() => {
-    // Listen for location updates from the server
+    console.log('Listening for location updates');
     socket.on('updateLocation', (locationData) => {
+      console.log('Location data:', locationData);
       if (locationData.bookingId === deleteItem?._id) {
         setDriverLocation(locationData);
       }
@@ -56,31 +58,6 @@ export default function ViewNewOpenBooking({
   const handleStartBooking = (booking) => {
     // Emit that the driver has accepted the booking and is en-route
     deleteBookingHandler(booking._id, userId, 'En-route to Pickup');
-
-    // Start watching driver's real-time location
-    const id = navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const locationData = {
-          lat: latitude,
-          lng: longitude,
-          bookingId: booking._id,
-        };
-
-        // Emit driver's current location to the server
-        socket.emit('driverLocationUpdate', locationData);
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-      }
-    );
-
-    setWatchId(id);
   };
 
   const filteredBooking = viewBooking.filter(
@@ -267,7 +244,10 @@ export default function ViewNewOpenBooking({
             >
               Yes
             </button>
-            <button className="addEntryButton" onClick={handleConfirmDeleteItem}>
+            <button
+              className="addEntryButton"
+              onClick={handleConfirmDeleteItem}
+            >
               No
             </button>
           </div>
