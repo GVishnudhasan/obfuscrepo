@@ -6,6 +6,7 @@ import Sidebar from '../../components/sidebar/SideBar';
 import ViewBooking from '../../components/ViewBooking/viewBooking';
 import {
   fetchUserBookingInfo,
+  fetchUserBookingInfoForDriver,
   deleteBookingHandler,
 } from '../../server/booking/booking';
 import Navbar from '../../components/NavBar/NavBar';
@@ -18,6 +19,10 @@ const ViewBookingPage = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (userRole === 'driver') {
+        await fetchUserBookingInfoForDriver(userId, setViewBooking);
+        return;
+      }
       await fetchUserBookingInfo(userId, setViewBooking);
     };
     fetchUserData();

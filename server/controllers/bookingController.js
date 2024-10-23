@@ -59,6 +59,22 @@ exports.viewBooking = async (req, res) => {
   }
 };
 
+//View bookings for a driver
+exports.viewDriverBooking = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(402).json({ message: 'User ID is required.' });
+  }
+
+  try {
+    const bookings = await Booking.find({ cabId: userId });
+    res.status(200).json({ message: 'Bookings fetched successfully', bookings });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+}
+
 // Delete a booking
 exports.deleteBooking = async (req, res) => {
   const { bookingId } = req.body;

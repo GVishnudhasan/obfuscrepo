@@ -4,6 +4,7 @@ import Modal from '../Modal/modal';
 import { Link } from 'react-router-dom';
 import { updateBookingStatus } from '../../server/booking/booking';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { io } from 'socket.io-client';
 import 'leaflet/dist/leaflet.css'; // Leaflet CSS import for map styles
 import { REACT_APP_API_URL } from '../../parameter/parameter';
@@ -78,6 +79,13 @@ export default function ViewBooking({
   const UpdateBookingStatus = async (bookingId, status) => {
     updateBookingStatus(bookingId, userId, status);
   };
+
+  const customIcon = L.icon({
+    iconUrl: './assets/car.png', // Replace with your icon path
+    iconSize: [30, 30], // Size of the icon
+    iconAnchor: [15, 30], // Point of the icon which will correspond to marker's location
+    popupAnchor: [0, -30], // Point from which the popup should open relative to the iconAnchor
+  });
 
   // Function to handle tracking the ride for users
   const handleTrackRide = (booking) => {
@@ -180,6 +188,8 @@ export default function ViewBooking({
 
     return null;
   };
+
+  
 
   return (
     <div className="artifacts-container">
@@ -316,7 +326,7 @@ export default function ViewBooking({
           <Modal isOpen={trackModalOpen} onClose={closeTrackModal}>
             <h2>Tracking Ride for Booking ID: {bookingToTrack._id}</h2>
             <div
-              style={{ height: '200px', width: '100%', position: 'relative' }}
+              style={{ height: '300px', width: '100%', position: 'relative' }}
             >
               {/* MapContainer with dynamic center based on current location */}
               <MapContainer
@@ -336,6 +346,7 @@ export default function ViewBooking({
                   <>
                     <Marker
                       position={[currentLocation.lat, currentLocation.lng]}
+                      icon={customIcon}
                     >
                       <Popup>
                         Driver is here: {currentLocation.lat},{' '}
@@ -347,6 +358,7 @@ export default function ViewBooking({
                   </>
                 )}
               </MapContainer>
+              <button className="mt-0 px-4 py-2 ml-48 bg-red-500 text-white rounded hover:bg-red-600" onClick={closeTrackModal}>Close</button>
             </div>
           </Modal>
         )}

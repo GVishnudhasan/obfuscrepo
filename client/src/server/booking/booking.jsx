@@ -80,6 +80,18 @@ export const fetchUserBookingInfo = async (userId, setViewBooking) => {
   }
 };
 
+export const fetchUserBookingInfoForDriver = async (userId, setViewBooking) => {
+  try {
+    const response = await axiosInstance.post(
+      `${REACT_APP_API_URL}/api/booking/viewDriverBooking`,
+      { userId }
+    );
+    setViewBooking(response.data.bookings);
+  } catch (error) {
+    ShowErrorMessage(error);
+  }
+}
+
 export const deleteBookingHandler = async (
   bookingId,
   userId,

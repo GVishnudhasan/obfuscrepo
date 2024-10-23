@@ -16,7 +16,7 @@ const Sidebar = ({ active, setActive, userRole }) => {
                 My Bookings
               </li>
             </Link>
-            <Link to="/currentBooking">
+            {/* <Link to="/currentBooking">
               <li
                 className={active === 'CurrentBooking' ? 'active' : ''}
                 onClick={() => setActive('CurrentBooking')}
@@ -24,7 +24,7 @@ const Sidebar = ({ active, setActive, userRole }) => {
                 <span className="material-symbols-outlined">check_circle</span>{' '}
                 Current Booking
               </li>
-            </Link>
+            </Link> */}
             <Link to="/newBooking">
               <li
                 className={active === 'NewBooking' ? 'active' : ''}
@@ -44,17 +44,26 @@ const Sidebar = ({ active, setActive, userRole }) => {
                 className={active === 'NewOpenBooking' ? 'active' : ''}
                 onClick={() => setActive('NewOpenBooking')}
               >
-                <span className="material-symbols-outlined">add_task</span> View
+                <span className="material-symbols-outlined">add_task</span> View Open
                 Booking
               </li>
             </Link>
-            <Link to="/currentBooking">
+            {/* <Link to="/currentBooking">
               <li
                 className={active === 'CurrentBooking' ? 'active' : ''}
                 onClick={() => setActive('CurrentBooking')}
               >
                 <span className="material-symbols-outlined">check_circle</span>{' '}
                 Current Booking
+              </li>
+            </Link> */}
+            <Link to="/myBookings">
+              <li
+                className={active === 'MyBookings' ? 'active' : ''}
+                onClick={() => setActive('MyBookings')}
+              >
+                <span className="material-symbols-outlined">folder_open</span>{' '}
+                My Bookings
               </li>
             </Link>
           </>
@@ -102,8 +111,6 @@ const Sidebar = ({ active, setActive, userRole }) => {
             </Link>
           </>
         )}
-
-        
       </ul>
     </aside>
   );

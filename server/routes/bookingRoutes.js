@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post('/', isAuthenticated, bookingController.createBooking);
 router.post('/viewBooking', isAuthenticated, bookingController.viewBooking);
+router.post('/viewDriverBooking', isAuthenticated, bookingController.viewDriverBooking);
 router.post('/deleteBooking', isAuthenticated, bookingController.deleteBooking);
 router.post('/viewOpenBooking', isAuthenticated, bookingController.viewOpenBooking);
 router.post('/updateBookingStatus', isAuthenticated, bookingController.updateBookingStatus);
